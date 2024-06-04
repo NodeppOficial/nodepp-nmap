@@ -1,7 +1,6 @@
 # NODEPP-NMAP
 
 A Nmap implementation using Nodepp.
-With this library, you can scann multiple ports at the same time
 
 # Usage
 
