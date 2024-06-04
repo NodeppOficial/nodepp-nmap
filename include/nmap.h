@@ -52,6 +52,10 @@ public: nmap_t () noexcept : obj( new nmap_config_t() ){}
     nmap_t ( nmap_config_t args ) noexcept : obj( type::bind( args ) ) 
            { obj->state = 1; }
 
+    bool is_closed() const noexcept { 
+         return obj->state==0; 
+    }
+
     void close() const noexcept { free(); }
 
     void free() const noexcept { 
