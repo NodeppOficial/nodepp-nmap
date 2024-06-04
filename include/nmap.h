@@ -51,10 +51,8 @@ public: nmap_t () noexcept : obj( new nmap_config_t() ){}
 
     nmap_t ( nmap_config_t args ) noexcept : obj( type::bind( args ) ) 
            { obj->state = 1; }
-           
-    bool is_closed() const noexcept { 
-         return obj->state==0; 
-    }
+
+    void close() const noexcept { free(); }
 
     void free() const noexcept { 
         if( obj->state == 0 ){ return; }
@@ -63,6 +61,7 @@ public: nmap_t () noexcept : obj( new nmap_config_t() ){}
     }
 
     void unpipe() const noexcept {
+         onDrain.emit(); 
          obj->state = 0;
     }
 
@@ -72,7 +71,7 @@ public: nmap_t () noexcept : obj( new nmap_config_t() ){}
         auto self = type::bind( this );
 
         process::add([=](){ static ulong timeout = 0;
-            if( self->is_closed() ){ self->onDrain.emit(); return -1; }
+            if( self->is_closed() ){ self->unpipe(); return -1; }
         coStart
 
             for( auto &x: list ){ *port += 1;
@@ -97,7 +96,7 @@ public: nmap_t () noexcept : obj( new nmap_config_t() ){}
             coNext;
 
             self->onProgress.emit( (uint)(*port*100/self->obj->maxport), *port );
-            if ( *port >= self->obj->maxport ){ self->onDrain.emit(); coEnd; }
+            if ( *port >= self->obj->maxport ){ self->unpipe(); coEnd; }
             for( auto &x: list ){ x.free(); }
 
         coGoto(0);            
