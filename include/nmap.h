@@ -44,17 +44,12 @@ public: nmap_t () noexcept : obj( new nmap_config_t() ){}
     event_t<except_t>  onError;
     event_t<uint,uint> onProgress;
 
-   ~nmap_t () noexcept {
-        if( obj.count()> 1 )
-          { return; } free();
-    }
-
     nmap_t ( nmap_config_t args ) noexcept : obj( type::bind( args ) ) 
            { obj->state = 1; }
 
-    bool is_closed() const noexcept { 
-         return obj->state==0; 
-    }
+   ~nmap_t () noexcept { if( obj.count()> 1 ) { return; } free(); }
+
+    bool is_closed() const noexcept { return obj->state==0; }
 
     void close() const noexcept { free(); }
 
@@ -65,8 +60,8 @@ public: nmap_t () noexcept : obj( new nmap_config_t() ){}
     }
 
     void unpipe() const noexcept {
-         onDrain.emit(); 
-         obj->state = 0;
+         if( obj->state == 0 ){ return; }
+         onDrain.emit(); obj->state = 0;
     }
 
     void pipe() const noexcept { 
