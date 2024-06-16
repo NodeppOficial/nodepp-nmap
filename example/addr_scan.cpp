@@ -9,16 +9,22 @@ using namespace nodepp;
 
 void onMain(){ 
 
-    nmap_config_t args; 
-    args.host    = "google.com";
+    nmap_addr_t args; 
+    args.from    = { 192, 168, 1, 1   };
+    args.to      = { 192, 168, 1, 255 };
     args.IPPROTO = IPPROTO_TCP;
-    args.maxport = 9999;
-    args.minport = 0;
     args.maxconn = 1000;
-    args.timeout = 3000;
+    args.port    = 53;
 
-    for( auto x: nmap::await( args ) )
-         console::log( "->", x );
+    auto scanner = nmap::addr::scan( args );
+
+    scanner.onClose([=](){
+        console::log( "scanner closed" );
+    });
+
+    scanner.onAddress([=]( string_t addr ){
+        console::log( "->", addr );
+    });
 
 }
 

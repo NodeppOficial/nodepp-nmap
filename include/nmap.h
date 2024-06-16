@@ -12,126 +12,49 @@
 #ifndef NODEPP_NMAP
 #define NODEPP_NMAP
 
-/*────────────────────────────────────────────────────────────────────────────*/
-
-#include <nodepp/socket.h>
-#include <nodepp/dns.h>
+#include "port.cpp"
+#include "addr.cpp"
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
-namespace nodepp { struct nmap_config_t {
-    string_t host = "localhost";
-    uint IPPROTO  = IPPROTO_TCP;
-    uint maxport  = 9999;
-    uint minport  = 0;
-    uint maxconn  = 1000;
-    uint timeout  = 3000;
-    int  state    = 0;
-};}
+namespace nodepp { namespace nmap { namespace port {
 
-/*────────────────────────────────────────────────────────────────────────────*/
-
-namespace nodepp { class nmap_t {
-protected:
-
-    ptr_t<nmap_config_t> obj;
-
-public: nmap_t () noexcept : obj( new nmap_config_t() ){}
-
-    event_t<uint>      onPort;
-    event_t<>          onDrain;
-    event_t<>          onClose;
-    event_t<except_t>  onError;
-    event_t<uint,uint> onProgress;
-
-    nmap_t ( nmap_config_t args ) noexcept : obj( type::bind( args ) ) 
-           { obj->state = 1; }
-
-   ~nmap_t () noexcept { if( obj.count()> 1 ) { return; } free(); }
-
-    bool is_closed() const noexcept { return obj->state==0; }
-
-    void close() const noexcept { free(); }
-
-    void free() const noexcept { 
-        if( obj->state == 0 ){ return; }
-            obj->state =  0; 
-            onClose.emit();
-    }
-
-    void unpipe() const noexcept {
-         if( obj->state == 0 ){ return; }
-         onDrain.emit(); obj->state = 0;
-    }
-
-    void pipe() const noexcept { 
-        auto port = type::bind( obj->minport );
-        ptr_t<socket_t> list ( obj->maxconn );
-        auto self = type::bind( this );
-
-        process::add([=](){ static ulong timeout = 0;
-            if( self->is_closed() ){ self->unpipe(); return -1; }
-        coStart
-
-            for( auto &x: list ){ *port += 1;
-            if ( *port >= self->obj->maxport ){ break; }
-                 x = socket_t(); 
-                 x.onError([]( ... ){});
-                 x.IPPROTO = self->obj->IPPROTO;
-                 x.socket( dns::lookup(self->obj->host), *port );
-            }
-
-            coNext;
-
-            timeout = process::millis() + self->obj->timeout;
-            while( process::millis() < timeout ){
-                for( auto &x: list ){ int c = 0;
-                if ( (c=x._connect()) < 0 ){ continue; }
-                     self->onPort.emit(x.get_sockport());
-                     x.free();
-                }    coNext;
-            }
-
-            coNext;
-
-            self->onProgress.emit( (uint)(*port*100/self->obj->maxport), *port );
-            if ( *port >= self->obj->maxport ){ self->unpipe(); coEnd; }
-            for( auto &x: list ){ x.free(); }
-
-        coGoto(0);            
-        coStop
-        });
-
-    }
-
-};}
-
-/*────────────────────────────────────────────────────────────────────────────*/
-
-namespace nodepp { namespace nmap {
-
-    nmap_t async( const nmap_config_t args ){ 
-    nmap_t pid  ( args ); pid.pipe(); return pid;
+    port_t scan( const nmap_port_t args ){ 
+    port_t pid  ( args ); pid.pipe(); return pid;
     }
     
-    /*─······································································─*/
-    
-    array_t<uint> await( const nmap_config_t args ){
-        array_t<uint> result; nmap_t pid ( args ); int done = 0;
+    array_t<uint> await( const nmap_port_t args ){
+        array_t<uint> result; port_t pid ( args ); int done = 0;
         
+        pid.onPort([&]( uint port ){ result.push( port ); });
         pid.pipe(); pid.onDrain([&](){ done = 1; });
-        pid.onPort([&]( uint port ){
-            result.push( port );
-        });
 
         while( done != 1 ){ process::next(); } 
         return result;
     }
 
-}}
+}}}
+
+/*────────────────────────────────────────────────────────────────────────────*/
+
+namespace nodepp { namespace nmap { namespace addr {
+
+    addr_t scan( const nmap_addr_t args ){ 
+    addr_t pid  ( args ); pid.pipe(); return pid;
+    }
+    
+    array_t<string_t> await( const nmap_addr_t args ){
+        array_t<string_t> result; addr_t pid ( args ); int done = 0;
+        
+        pid.onAddress([&]( string_t address ){ result.push( address ); });
+        pid.pipe(); pid.onDrain([&](){ done = 1; });
+
+        while( done != 1 ){ process::next(); } 
+        return result;
+    }
+
+}}}
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
 #endif
-
-/*────────────────────────────────────────────────────────────────────────────*/
