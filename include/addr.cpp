@@ -23,7 +23,7 @@ namespace nodepp { struct nmap_addr_t {
     ptr_t<uchar> to;   // ({ 192, 168, x, x })
     uint IPPROTO  = IPPROTO_TCP;
     uint maxconn  = 1000;
-    uint timeout  = 100;
+    uint timeout  = 3000;
     uint port     = 53;
     int  state    = 0;
 };}
