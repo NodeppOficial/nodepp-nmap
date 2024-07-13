@@ -24,7 +24,7 @@ namespace nodepp { struct nmap_port_t {
     uint maxport  = 9999;
     uint minport  = 0;
     uint maxconn  = 1000;
-    uint timeout  = 100;
+    uint timeout  = 3000;
     int  state    = 0;
 };}
 
