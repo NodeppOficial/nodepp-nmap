@@ -6,7 +6,7 @@ A Nmap implementation using Nodepp.
 
 ```cpp
 #include <nodepp/nodepp.h>
-#include <nmap.h>
+#include <nmap/nmap.h>
 
 using namespace nodepp;
 

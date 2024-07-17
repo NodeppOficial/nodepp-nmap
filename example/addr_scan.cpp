@@ -1,5 +1,5 @@
 #include <nodepp/nodepp.h>
-#include <nmap.h>
+#include <nmap/nmap.h>
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
